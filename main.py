@@ -121,7 +121,7 @@ class AddEditForm(QDialog):
         if self.line_sort.text():
             data = (self.line_sort.text(), self.rstg[self.combo_roasting.currentText()],
                     self.tps[self.combo_types.currentText()],
-                    self.spin_price.value(), self.spin_volume.value(), self.parent_link.item_active[0])
+                    self.spin_price.value(), self.spin_volume.value())
             with sqlite3.connect('coffee.sqlite') as con:
                 cur = con.cursor()
                 if self.mode is None:
@@ -130,7 +130,7 @@ class AddEditForm(QDialog):
                 elif self.mode == 'edit':
                     cur.execute('''UPDATE coffee
                                     SET sorttitle=?, roastingdegree=?, type=?, price=?, packingvolume=?
-                                    WHERE id=?''', data)
+                                    WHERE id=?''', data + (self.parent_link.item_active[0],))
             self.parent_link.loadtable('+disconnect')
             super().accept()
         else:
