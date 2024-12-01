@@ -3,14 +3,13 @@ import sqlite3
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMainWindow, QApplication, QTableWidgetItem, QDialog, QMessageBox
 from PyQt6 import uic
-from ui_class import Ui_Dialog, Ui_MainWindow
 
 
-class Example(QMainWindow, Ui_MainWindow):
+class Example(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setupUi(self)
-        self.setWindowTitle('Информации о сортах кофе')
+        uic.loadUi('main.ui', self)
+        self.setWindowTitle('Просмотр информации о сортах кофе')
         self.setFixedSize(750, 600)
         self.item_active = list()
         self.loadtable()
@@ -20,7 +19,7 @@ class Example(QMainWindow, Ui_MainWindow):
     def loadtable(self, mode=None):
         if mode == '+disconnect':
             self.tableWidget.disconnect()
-        with sqlite3.connect('data/coffee.sqlite') as con:
+        with sqlite3.connect('coffee.sqlite') as con:
             cur = con.cursor()
             result = cur.execute('''SELECT coffee.id as ID,
                                         coffee.SortTitle as 'Сорт',
@@ -76,14 +75,14 @@ class Example(QMainWindow, Ui_MainWindow):
         self.setWindowTitle('CoffeeMan v1.0')
 
 
-class AddEditForm(QDialog, Ui_Dialog):
+class AddEditForm(QDialog):
     def __init__(self, parent=None, mode=None):
         super().__init__()
-        self.setupUi(self)
+        uic.loadUi('addEditCoffeeForm.ui', self)
         self.parent_link = parent
         self.mode = mode
 
-        with sqlite3.connect('data/coffee.sqlite') as con:
+        with sqlite3.connect('coffee.sqlite') as con:
             cur = con.cursor()
             roasting = cur.execute('''SELECT * FROM roasting ORDER BY id''').fetchall()
             self.rstg = dict()
@@ -122,8 +121,8 @@ class AddEditForm(QDialog, Ui_Dialog):
         if self.line_sort.text():
             data = (self.line_sort.text(), self.rstg[self.combo_roasting.currentText()],
                     self.tps[self.combo_types.currentText()],
-                    self.spin_price.value(), self.spin_volume.value())
-            with sqlite3.connect('data/coffee.sqlite') as con:
+                    self.spin_price.value(), self.spin_volume.value(), self.parent_link.item_active[0])
+            with sqlite3.connect('coffee.sqlite') as con:
                 cur = con.cursor()
                 if self.mode is None:
                     cur.execute('''INSERT INTO coffee(sorttitle, roastingdegree, type, price, packingvolume) 
@@ -131,7 +130,7 @@ class AddEditForm(QDialog, Ui_Dialog):
                 elif self.mode == 'edit':
                     cur.execute('''UPDATE coffee
                                     SET sorttitle=?, roastingdegree=?, type=?, price=?, packingvolume=?
-                                    WHERE id=?''', data + (self.parent_link.item_active[0],))
+                                    WHERE id=?''', data)
             self.parent_link.loadtable('+disconnect')
             super().accept()
         else:
